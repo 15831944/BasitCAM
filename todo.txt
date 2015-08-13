@@ -1,0 +1,13 @@
+1. DXF okunacak                             30%
+2. Grid olacak                              80%
+3. Transfer Dialog                          00%
+4. G code writer                            00%
+5. Koordinat bilgisi gösterilecek           90%
+6. Tools, Tools Dialog                      90%
+---------------------------------------------------
+ Toplam                                     %
+
+
+6 lua, java script post processor
+7 çizim
+
