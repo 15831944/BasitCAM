@@ -1020,8 +1020,11 @@ void DL_Dxf::addPolyline(DL_CreationInterface* creationInterface) {
                             vertices[i*4+3]);
 
             creationInterface->addVertex(d);
+            pd.AddVertex(d);
         }
+       // creationInterface->addPolyline(pd);
         creationInterface->endEntity();
+
     }
 }
 

@@ -20,8 +20,8 @@ ToolsDialog::ToolsDialog(QWidget *parent) :
     ui->feedrate->setValidator(new QDoubleValidator(0, 999999., 10, this));
     ui->diameter->setValidator(new QDoubleValidator(0, 999999., 10, this));
 
-    m_settingsFile = QApplication::applicationDirPath().left(1) + ":/toolSettings.ini";
-
+    //m_settingsFile = QApplication::applicationDirPath().left(1) + ":/toolSettings.ini";
+    m_settingsFile = "toolSettings.ini";
     m_model = new QStringListModel(this);
     ui->toolList->setModel(m_model);
     ui->toolList->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -109,4 +109,12 @@ void ToolsDialog::WriteSettings() const
 const QStringListModel *ToolsDialog::GetModelList() const
 {
     return m_model;
+}
+
+const Tool *ToolsDialog::GetTool(int index) const
+{
+    if (m_tools.size() <= index)
+        return NULL;
+
+    return m_tools.at(index);
 }

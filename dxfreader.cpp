@@ -51,6 +51,16 @@ void DXFReader::addLine(const DL_LineData& data)
  */
 void DXFReader::addArc(const DL_ArcData& data)
 {
+
+    gp_Pnt p1(data.cx, data.cy, data.cz);
+    gp_Ax2 a2(p1, gp_Dir(0, 0, 1));
+    gp_Circ c(a2, data.radius);
+
+    TopoDS_Shape arc = BRepBuilderAPI_MakeEdge(c, DEGTORAD(data.angle1), DEGTORAD(data.angle2)).Shape();
+    m_mainClass->draw(arc);
+
+
+    /*
     gp_Pnt p1(data.cx, data.cy, data.cz);
     gp_Ax2 a2(p1, gp_Dir(0, 0, 1));
     gp_Circ circle(a2, data.radius);
@@ -58,6 +68,10 @@ void DXFReader::addArc(const DL_ArcData& data)
 
     TopoDS_Shape arc = BRepBuilderAPI_MakeEdge(geoArc.Value()).Shape();
     m_mainClass->draw(arc);
+    qDebug() << data.angle1;
+    qDebug() << data.angle2;
+    */
+
     /*printf("ARC      (%6.3f, %6.3f, %6.3f) %6.3f, %6.3f, %6.3f\n",
            data.cx, data.cy, data.cz,
            data.radius, data.angle1, data.angle2);*/
@@ -68,12 +82,13 @@ void DXFReader::addArc(const DL_ArcData& data)
  * Sample implementation of the method which handles circle entities.
  */
 void DXFReader::addCircle(const DL_CircleData& data) {
-     qDebug() << "addcircle";
+
+    qDebug() << "addcircle";
     gp_Pnt p1(data.cx, data.cy, data.cz);
-    gp_Ax2 a2(p1, gp_Dir());
+    gp_Ax2 a2(p1, gp_Dir(0, 0, 1));
     gp_Circ c(a2, data.radius);
     TopoDS_Shape circle = BRepBuilderAPI_MakeEdge(c).Shape();
-    m_mainClass->draw(circle);
+    m_mainClass->draw(circle, Standard_False);
 
     /*printf("CIRCLE   (%6.3f, %6.3f, %6.3f) %6.3f\n",
            data.cx, data.cy, data.cz,
@@ -88,20 +103,41 @@ void DXFReader::addCircle(const DL_CircleData& data) {
  */
 void DXFReader::addPolyline(const DL_PolylineData& data) {
 
-    printf("POLYLINE \n");
-    printf("flags: %d\n", (int)data.flags);
-    printAttributes();
+    qDebug() << "polyline";
+    //
+    m_polyline.SetClose(data.flags & 0x1);
+    int size = data.m_vertices.size();
+
+    for (int i = 0; i < size; ++i) {
+       DL_VertexData v = data.m_vertices[i];
+       m_polyline.AddPoint(gp_Pnt(v.x, v.y, v.z));
+    }
+
+
+    //
+    //printf("POLYLINE \n");
+    //printf("flags: %d\n", (int)data.flags);
+    //printAttributes();
 }
 
 
 /**
  * Sample implementation of the method which handles vertices.
  */
+
 void DXFReader::addVertex(const DL_VertexData& data) {
+
+
+    m_polyline.AddPoint(gp_Pnt(data.x, data.y, data.z), data.bulge);
+
+    /*qDebug() << "vertex";
     printf("VERTEX   (%6.3f, %6.3f, %6.3f) %6.3f\n",
            data.x, data.y, data.z,
-           data.bulge);
-    printAttributes();
+           data.bulge);*/
+    //BRepBuilderAPI_MakeVertex vertex(gp_Pnt(data.x, data.y, data.z));
+    //m_mainClass->draw(vertex, Standard_False);
+    //printAttributes();
+
 }
 
 
@@ -138,6 +174,11 @@ void DXFReader::printAttributes() {
     //printf(" Type: %s\n", attributes.getLineType().c_str());
 }
 
-
-
+void DXFReader::endEntity()
+{
+    if (!m_polyline.IsEmpty()) {
+        m_mainClass->draw(m_polyline.GetWireShape(), Standard_False);
+        m_polyline = LinesOrArcsWithVertex();
+    }
+}
 // EOF

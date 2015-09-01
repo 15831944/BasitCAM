@@ -1,3 +1,5 @@
+http://www.opencascade.org/org/forum/thread_10972/?forum=3
+http://www.opencascade.org/org/forum/thread_8207/?forum=3
 
 http://www.opencascade.org/org/forum/thread_18641/?forum=3
 /////////////////////////////////////////////////////////////////////////////////
@@ -177,9 +179,61 @@ draw(faceOffset2.Shape());
 
 
 /////////////////////////////////////////////////////////////////////////////////
+
+GeomAdaptor_Curve adaptedCurve(myCurve);
+
+gp_Pnt pnt1,pnt2;
+
+adaptedCurve.D0(0.0, pnt1);
+adaptedCurve.D0(curv.LastParameter(), pnt2);
+
+pnt1 will have the first point (first vertex)
+pnt2 will have the last point (other vertex)
 /////////////////////////////////////////////////////////////////////////////////
+
+çalıştı.
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(gp_Pnt(0.0, 0.0, 0.0), gp_Pnt(0.0, 60.0, 0.0));
+    draw(sh);
+
+    TopoDS_Wire wire= BRepBuilderAPI_MakeWire(edge);
+    TopoDS_Face workingPlane = BRepBuilderAPI_MakeFace(gp_Pln(gp::Origin(),gp::DZ()));
+    BRepOffsetAPI_MakeOffset offset(workingPlane);
+    offset.AddWire(wire);
+    offset.Perform(10.0);
+    draw(offset.Shape());
+
+    return;
 /////////////////////////////////////////////////////////////////////////////////
+    gp_Pnt p1 (0., 0., 0.);
+    gp_Pnt p3 (0., 10., 0.);
+    gp_Pnt midP((p1.XYZ() + p3.XYZ()) / 2.0);
+    double bulge = 3.0;
+    bool reverse = false;
+
+    if (bulge < 0) {
+        bulge *= -1;
+        reverse = true;
+    }
+    double dist = p1.Distance(midP);
+    double angle = RADTODEG(atan(bulge / dist)) * 4;
+
+    qDebug() << angle;
+    gp_Vec vec1(p1, p3);
+    vec1.Normalize();
+    gp_Vec vec2(vec1 ^ gp::DZ());
+    vec2.Scale(bulge);
+    gp_Pnt p2 = midP.Translated(vec2);
+
+    Handle(Geom_TrimmedCurve) o = GC_MakeArcOfCircle(p1, p2, p3);
 /////////////////////////////////////////////////////////////////////////////////
+bulge -dxf
+
+Dxf deki bulge değeri;
+bulge yay açısının 4 te birinin tangant değeridir.
+bulge = tan(açı / 4);
+eğer bulge değeri 0 ise düz çizgi
+eğer bulge değeri 1 ise yarım daire
+kaynak dxf reference
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////

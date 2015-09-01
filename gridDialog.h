@@ -14,7 +14,7 @@ class GridDialog : public QDialog
     Q_OBJECT
 public:
     GridDialog(OccView *occView, QWidget *parent = 0);
-
+    ~GridDialog();
 private slots:
     void okButton();
     void cancelButton();
@@ -24,6 +24,8 @@ private:
 
     void initLayout();
     void initConnections();
+    void WriteSettings() const;
+    void ReadSettings();
 
 
     QPushButton *m_okButton;

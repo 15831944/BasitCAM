@@ -16,6 +16,7 @@
 #include "ui_occQt.h"
 
 #include <AIS_InteractiveContext.hxx>
+#include <QVector>
 
 class OccView;
 class QComboBox;
@@ -23,6 +24,7 @@ class QComboBox;
 class GridDialog;
 class GCodeDialog;
 class ToolsDialog;
+class TopoDS_Edge;
 
 //! Qt main window which include OpenCASCADE for its central widget.
 class occQt : public QMainWindow
@@ -34,6 +36,8 @@ public:
     occQt(QWidget *parent = 0);
     ~occQt();
 
+    const OccView *GetView() const;
+    const ToolsDialog *GetToolsDialog() const;
 protected:
     //! create all the actions.
     void createActions(void);
@@ -96,7 +100,7 @@ private slots:
     void openDxfFile();
     void save();
     void open();
-
+    void openRecentFile();
 
 
 
@@ -145,6 +149,10 @@ private:
     QAction *mGridDialogAction;
     QAction *mGCodeDialogAction;
     QAction *mToolsDialogAction;
+
+    enum { MaxRecentFiles = 5 };
+    QAction *m_recentFileActs[MaxRecentFiles];
+
     //! the menus of the application.
     QMenu* mFileMenu;
     QMenu *mEditMenu;
@@ -153,6 +161,7 @@ private:
     QMenu* mModelingMenu;
     QMenu* mOperationMenu;
     QMenu* mHelpMenu;
+    //QMenu *m_recentFilesMenu;
 
     //! the toolbars of the application.
     QToolBar* mViewToolBar;
@@ -172,7 +181,8 @@ private:
 
 public:
 
-  void draw(const TopoDS_Shape &sh) const;
+  void draw(QVector <TopoDS_Shape *> path) const;
+  void draw(const TopoDS_Shape &sh, Standard_Boolean updateViewer = Standard_True, Quantity_NameOfColor clr = Quantity_NOC_BLUE1) const;
 
 private:
   GridDialog *mGridDialog;
@@ -181,9 +191,16 @@ private:
 
 public slots:
    void ShowCoordinateOnStatusBar(const QString &message);
+   void HideSelected();
+   void ShowAll();
 
 private:
-   void createConnections();
+    void createConnections();
+    void loadDxfFile(const QString &file);
+    void loadIgesFile(const QString &file);
+    void setCurrentFile(const QString &fileName);
+    void updateRecentFileActions();
+    QString strippedName(const QString &fullFileName);
 };
 
 #endif // OCCQT_H

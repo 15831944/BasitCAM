@@ -2,6 +2,11 @@
 
 #include <qstringlist.h>
 
+Tool::Tool()
+{
+
+}
+
 Tool::Tool(QString name, double diameter, double spindle, double feedrate)
     :   m_name(name),
         m_dia(diameter),

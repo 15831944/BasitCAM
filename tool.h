@@ -6,6 +6,7 @@
 class Tool
 {
 public:
+    Tool();
     Tool(QString name, double diameter, double spindle, double feedrate);
 
     QString Name() const;

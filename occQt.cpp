@@ -1,10 +1,8 @@
 /*
-*    Copyright (c) 2014 eryar All Rights Reserved.
-*
 *           File : occQt.cpp
-*         Author : eryar@163.com
-*           Date : 2014-07-15 21:00
-*        Version : OpenCASCADE6.8.0 & Qt5.4
+*         Author : suleymanturkoglu_@hotmail.com
+*           Date : 2015-07-15 21:00
+*        Version : OpenCASCADE6.9.0 & Qt5.4
 *
 *    Description : Qt main window for OpenCASCADE.
 */
@@ -22,22 +20,27 @@
 #include <QFileDialog>
 #include <QDebug>
 #include <QComboBox>
+#include <QSettings>
+#include <QShortcut>
 
 #include "basicheaders.h"
+#include "genericalgos.h"
 
 #include "DXFHeaders/dl_dxf.h"
 #include "DXFHeaders/dl_creationadapter.h"
 #include "dxfreader.h"
-#include <GC_MakeArcOfCircle.hxx>
 #include <Geom_BezierSurface.hxx>
 #include <Handle_Geom_BezierSurface.hxx>
 #include <AIS_MultipleConnectedInteractive.hxx>
+
+#define RECENTFILESETTINGS  "RecentFiles.ini"
 
 occQt::occQt(QWidget *parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
     setWindowTitle("BasitCAM");
+
     mOccView = new OccView(this);
 
     mContext = mOccView->getContext();
@@ -55,8 +58,7 @@ occQt::occQt(QWidget *parent)
     mPrimitiveToolBar->hide();
 
 
-
-
+    showMaximized();
 
 }
 
@@ -70,6 +72,7 @@ void occQt::createConnections()
     connect(mToolsDialog, SIGNAL(ChangeToolList(const QStringListModel *)), mGCodeDialog, SLOT(ChangedTools(const QStringListModel*)));
 }
 
+QShortcut *showSC;
 void occQt::createActions( void )
 {
     mExitAction = new QAction(tr("Exit"), this);
@@ -195,17 +198,32 @@ void occQt::createActions( void )
     mGridDialogAction = new QAction(tr("Grid"), this);
     mGridDialogAction->setStatusTip(tr("Grid Dialog"));
     mGridDialogAction->setIcon(QIcon(":/Resources/grid.png"));
-    connect(mGridDialogAction, SIGNAL(triggered()), mGridDialog, SLOT(open()));
+    connect(mGridDialogAction, SIGNAL(triggered()), mGridDialog, SLOT(show()));
 
     mGCodeDialogAction = new QAction(tr("G Code"), this);
     mGCodeDialogAction->setStatusTip(tr("G Code Dialog"));
     mGCodeDialogAction->setIcon(QIcon(":/Resources/gcode.png"));
-    connect(mGCodeDialogAction, SIGNAL(triggered()), mGCodeDialog, SLOT(open()));
+    connect(mGCodeDialogAction, SIGNAL(triggered()), mGCodeDialog, SLOT(show()));
 
     mToolsDialogAction = new QAction(tr("Tools"), this);
     mToolsDialogAction->setStatusTip(tr("Tools Dialog"));
     mToolsDialogAction->setIcon(QIcon(":/Resources/tools.png"));
-    connect(mToolsDialogAction, SIGNAL(triggered()), mToolsDialog, SLOT(open()));
+    connect(mToolsDialogAction, SIGNAL(triggered()), mToolsDialog, SLOT(show()));
+
+    for (int i = 0; i < MaxRecentFiles; ++i) {
+        m_recentFileActs[i] = new QAction(this);
+        m_recentFileActs[i]->setVisible(false);
+        connect(m_recentFileActs[i], SIGNAL(triggered(bool)),
+                this, SLOT(openRecentFile()));
+    }
+
+
+    QShortcut *hideSC = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_H), this);
+    connect(hideSC, SIGNAL(activated()), this, SLOT(HideSelected()));
+
+
+    QShortcut *showSC = new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_H), this);
+    connect(showSC, SIGNAL(activated()), this, SLOT(ShowAll()));
 }
 
 void occQt::createMenus( void )
@@ -215,7 +233,15 @@ void occQt::createMenus( void )
     mFileMenu->addAction(mSaveAction);
     mFileMenu->addAction(mOpenIgesAction);
     mFileMenu->addAction(mOpenDxfAction);
+    mFileMenu->addSeparator();
+    for (int i = 0; i < MaxRecentFiles; ++i)
+        mFileMenu->addAction(m_recentFileActs[i]);
+
+    mFileMenu->addSeparator();
     mFileMenu->addAction(mExitAction);
+
+    updateRecentFileActions();
+
 
     mEditMenu = menuBar()->addMenu(tr("&Edit"));
     mEditMenu->addAction(mGridDialogAction);
@@ -227,6 +253,7 @@ void occQt::createMenus( void )
     mViewMenu->addSeparator();
     mViewMenu->addAction(mViewResetAction);
     mViewMenu->addAction(mViewFitallAction);
+
 
 //    mPrimitiveMenu = menuBar()->addMenu(tr("&Primitive"));
 //    mPrimitiveMenu->addAction(mMakeBoxAction);
@@ -301,7 +328,7 @@ void occQt::createUIElements()
 {
     mGridDialog = new GridDialog(mOccView, this);
     mToolsDialog = new ToolsDialog(this);
-    mGCodeDialog = new GCodeDialog(mOccView, this);
+    mGCodeDialog = new GCodeDialog(this, this);
     mGCodeDialog->ChangedTools(mToolsDialog->GetModelList());
 
     mViewPlaneComboBox = new QComboBox(this);
@@ -313,6 +340,8 @@ void occQt::createUIElements()
     mOccView->changeViewingPlane(0);
 }
 
+TopoDS_Shape MakeBottle(const Standard_Real myWidth, const Standard_Real myHeight,
+                    const Standard_Real myThickness, TopoDS_Shape &out);
 void occQt::about()
 {
     QMessageBox::about(this, tr("About BasitCAM"),
@@ -716,43 +745,83 @@ void occQt::openIgesFile()
     QString str = QFileDialog::getOpenFileName(this, "Open Iges File", "", "*.igs");
     if (str.isEmpty())
         return;
-    qDebug() << str;
+    loadIgesFile(str);
+}
+void occQt::loadIgesFile(const QString &file)
+{
+
+    QFile f(file);
+    if (!f.open(QFile::ReadOnly | QFile::Text)) {
+        QMessageBox::warning(this, tr("IGES Files"),
+                             tr("Cannot read file %1:\n%2.")
+                             .arg(file)
+                             .arg(f.errorString()));
+        return;
+    }
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
 
     IGESControl_Reader reader;
-    reader.ReadFile(str.toStdString().c_str());
+    reader.ReadFile(file.toStdString().c_str());
     reader.PrintCheckLoad(false, IFSelect_GeneralInfo );
 
 
     Standard_Integer nIgesFaces,nTransFaces;
-
     //loads file MyFile.igs
     Handle(TColStd_HSequenceOfTransient) myList =  reader.GiveList("iges-faces");
     //selects all IGES faces in the file and puts them into a list  called //MyList,
    // nIgesFaces = myList.Length();
     nTransFaces = reader.TransferList(myList);
     //translates MyList,
-    qDebug() <<"   Transferred:"<<nTransFaces<<endl;
+    //qDebug() <<"   Transferred:"<<nTransFaces<<endl;
     TopoDS_Shape sh = reader.OneShape();
     //and obtains the results in an OCCT shape.
 
     Handle_AIS_Shape aisShape = new AIS_Shape(sh);
    // aisShape->SetColor(Quantity_NOC_STEELBLUE);
     mContext->Display(aisShape);
+
+    QApplication::restoreOverrideCursor();
+    setCurrentFile(file);
+    statusBar()->showMessage(tr("File loaded"));
 }
+
 
 void occQt::openDxfFile()
 {
-    QString str = QFileDialog::getOpenFileName(this, "Open Iges File", "", "*.dxf");
+    QString str = QFileDialog::getOpenFileName(this, "Open DXF File", "", "*.dxf");
     if (str.isEmpty())
         return;
+
+    loadDxfFile(str);
+}
+void occQt::loadDxfFile(const QString &file)
+{
+
+    QFile f(file);
+    if (!f.open(QFile::ReadOnly | QFile::Text)) {
+        QMessageBox::warning(this, tr("DXF Files"),
+                             tr("Cannot read file %1:\n%2.")
+                             .arg(file)
+                             .arg(f.errorString()));
+        return;
+    }
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
     DXFReader *creationClas = new DXFReader(this);
     DL_Dxf *dxf = new DL_Dxf();
-    if (!dxf->in(str.toStdString().c_str(), creationClas)) {
+    if (!dxf->in(file.toStdString().c_str(), creationClas)) {
         qDebug() << "could not be opened";
         return;
     }
+    qDebug() << "okundu";
     delete dxf;
     delete creationClas;
+
+    QApplication::restoreOverrideCursor();
+    setCurrentFile(file);
+    statusBar()->showMessage(tr("File loaded"));
 }
 
 void occQt::open()
@@ -810,13 +879,19 @@ void occQt::save()
     s->Write(f,d);
 }
 
-void occQt::draw(const TopoDS_Shape &sh) const
+void occQt::draw(const TopoDS_Shape &sh, Standard_Boolean updateViewer, Quantity_NameOfColor clr) const
 {
     Handle_AIS_Shape hSh = new AIS_Shape(sh);
-    mContext->Display(hSh);
-
-
-
+    hSh->SetColor(clr);
+    mContext->Display(hSh, updateViewer);
+}
+void occQt::draw(QVector <TopoDS_Shape *> path) const
+{
+    for (int i = 0; i < path.size(); ++i) {
+        Handle_AIS_Shape hSh = new AIS_Shape(*path[i]);
+        hSh->SetColor(Quantity_NOC_YELLOW);
+        mContext->Display(hSh);
+    }
 
 }
 
@@ -824,3 +899,72 @@ void occQt::draw(const TopoDS_Shape &sh) const
  {
      statusBar()->showMessage(message);
  }
+const OccView *occQt::GetView() const
+{
+    return mOccView;
+}
+const ToolsDialog *occQt::GetToolsDialog() const
+{
+    return mToolsDialog;
+}
+void occQt::updateRecentFileActions()
+{
+    QSettings settings(RECENTFILESETTINGS);
+    QStringList files = settings.value("recentFileList").toStringList();
+
+    int numRecentFiles = qMin(files.size(), (int)MaxRecentFiles);
+
+    for (int i = 0; i < numRecentFiles; ++i) {
+        QString text = tr("&%1 %2").arg(i + 1).arg(strippedName(files[i]));
+        m_recentFileActs[i]->setText(text);
+        m_recentFileActs[i]->setData(files[i]);
+        m_recentFileActs[i]->setVisible(true);
+        qDebug() << "ii" << i;
+    }
+    for (int j = numRecentFiles; j < MaxRecentFiles; ++j)
+        m_recentFileActs[j]->setVisible(false);
+
+    //separatorAct->setVisible(numRecentFiles > 0);
+}
+
+QString occQt::strippedName(const QString &fullFileName)
+{
+    return QFileInfo(fullFileName).fileName();
+}
+void occQt::openRecentFile()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action) {
+        QString str = action->data().toString();
+        if (str.endsWith(".dxf", Qt::CaseInsensitive))
+            loadDxfFile(str);
+        if (str.endsWith(".igs", Qt::CaseInsensitive))
+            loadIgesFile(str);
+    }
+}
+void occQt::setCurrentFile(const QString &fileName)
+{
+    //curFile = fileName;
+    setWindowFilePath(fileName);
+
+    QSettings settings(RECENTFILESETTINGS);
+    QStringList files = settings.value("recentFileList").toStringList();
+    files.removeAll(fileName);
+    files.prepend(fileName);
+    while (files.size() > MaxRecentFiles)
+        files.removeLast();
+
+    settings.setValue("recentFileList", files);
+    updateRecentFileActions();
+
+
+}
+void occQt::HideSelected()
+{
+    mContext->EraseSelected();
+}
+
+void occQt::ShowAll()
+{
+    mContext->DisplayAll();
+}

@@ -8,7 +8,9 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QIntValidator>
-#include <qdebug.h>
+#include <QSettings>
+
+#define GRID_DIALOG_SETTINGS_FILE   "GridDialogSettings.ini"
 
 GridDialog::GridDialog(OccView *occView, QWidget *parent)
             : m_occView(occView), QDialog(parent)
@@ -46,10 +48,16 @@ GridDialog::GridDialog(OccView *occView, QWidget *parent)
     initConnections();
 
     m_occView->initGrid(0.0, 0.0, 10.0, 10.0, 100.0, 100.0);
-    m_isCheck->setChecked(true);
-    isChecked(true);
+    //m_isCheck->setChecked(true);
+    //isChecked(true);
+
+    ReadSettings();
 
 
+}
+GridDialog::~GridDialog()
+{
+    WriteSettings();
 }
 
 void GridDialog::initLayout()
@@ -97,10 +105,7 @@ void GridDialog::okButton()
     double xSize = m_xDistance->text().toInt();
     double ySize = m_yDistance->text().toInt();
 
-    qDebug() << xStep;
-    qDebug() << yStep;
-    qDebug() << xSize;
-    qDebug() << ySize;
+
 
     m_occView->initGrid(0.0, 0.0, xStep, yStep, xSize, ySize);
     accept();
@@ -116,4 +121,21 @@ void GridDialog::isChecked(bool isChecked)
         m_occView->showGrid();
     else
         m_occView->hideGrid();
+}
+void GridDialog::WriteSettings() const
+{
+    QSettings set(GRID_DIALOG_SETTINGS_FILE);
+    set.setValue("isShow", m_isCheck->isChecked());
+}
+
+void GridDialog::ReadSettings()
+{
+    bool isCkd = true;
+    QSettings set(GRID_DIALOG_SETTINGS_FILE);
+
+    isCkd = set.value("isShow", isCkd).toBool();
+
+
+    m_isCheck->setChecked(isCkd);
+    isChecked(isCkd);
 }

@@ -373,38 +373,6 @@ struct    DL_CircleData {
     double radius;
 };
 
-
-
-/**
- * Polyline Data.
- */
-struct    DL_PolylineData {
-    /**
-     * Constructor.
-     * Parameters: see member variables.
-     */
-    DL_PolylineData(int pNumber, int pMVerteces, int pNVerteces, int pFlags) {
-        number = pNumber;
-        m = pMVerteces;
-        n = pNVerteces;
-        flags = pFlags;
-    }
-
-    /*! Number of vertices in this polyline. */
-    unsigned int number;
-
-    /*! Number of vertices in m direction if polyline is a polygon mesh. */
-    unsigned int m;
-
-    /*! Number of vertices in n direction if polyline is a polygon mesh. */
-    unsigned int n;
-
-    /*! Flags */
-    int flags;
-};
-
-
-
 /**
  * Vertex Data.
  */
@@ -431,6 +399,45 @@ struct    DL_VertexData {
      * (The tangent of 1/4 of the arc angle or 0 for lines) */
     double bulge;
 };
+
+
+/**
+ * Polyline Data.
+ */
+struct    DL_PolylineData {
+    /**
+     * Constructor.
+     * Parameters: see member variables.
+     */
+    DL_PolylineData(int pNumber, int pMVerteces, int pNVerteces, int pFlags) {
+        number = pNumber;
+        m = pMVerteces;
+        n = pNVerteces;
+        flags = pFlags;
+    }
+
+    void AddVertex(DL_VertexData vertex){
+        m_vertices.push_back(vertex);
+    }
+
+
+    /*! Number of vertices in this polyline. */
+    unsigned int number;
+
+    /*! Number of vertices in m direction if polyline is a polygon mesh. */
+    unsigned int m;
+
+    /*! Number of vertices in n direction if polyline is a polygon mesh. */
+    unsigned int n;
+
+    /*! Flags */
+    int flags;
+
+    std::vector<DL_VertexData> m_vertices;
+};
+
+
+
 
 
 /**

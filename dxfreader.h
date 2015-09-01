@@ -1,9 +1,11 @@
 #ifndef DXFREADER_H
 #define DXFREADER_H
 
-
+#include <QVector>
 #include "DXFHeaders/dl_creationadapter.h"
+#include "linesorarcswithvertex.h"
 
+class LineOrArc;
 class occQt;
 class DXFReader : public DL_CreationAdapter {
 public:
@@ -18,11 +20,13 @@ public:
     virtual void addVertex(const DL_VertexData& data);
     virtual void add3dFace(const DL_3dFaceData& data);
 
+    virtual void endEntity();
+
     void printAttributes();
 
 private:
     const occQt *m_mainClass;
-
+    LinesOrArcsWithVertex m_polyline;
 };
 
 

@@ -50,7 +50,7 @@ public:
 signals:
     void selectionChanged(void);
     void MessageOfCoordinate(const QString &message);
-
+    void MouseLeftPressed();
 public slots:
     //! operations for the view.
     void pan(void);
@@ -121,10 +121,12 @@ private:
 
     //! rubber rectangle for the mouse selection.
     QRubberBand* mRectBand;
-
-    void drawLine();
-    gp_Pnt *mP1;
-    gp_Pnt *mP2;
+public:
+    gp_Pnt GetLeftClickMousePos() const;
+    gp_Pnt mLastLClickP;
+//    void drawLine();
+//    gp_Pnt *mP1;
+//    gp_Pnt *mP2;
 };
 
 #endif // _OCCVIEW_H_

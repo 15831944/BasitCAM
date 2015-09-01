@@ -61,8 +61,8 @@ OccView::OccView(QWidget* parent )
     mYmax(0),    
     mCurrentMode(CurAction3d_DynamicPanning),
     mDegenerateModeIsOn(Standard_True),
-    mRectBand(NULL),
-    mP1(NULL), mP2(NULL)
+    mRectBand(NULL)
+//    mP1(NULL), mP2(NULL)
 
 {
     // Create Aspect_DisplayConnection
@@ -112,7 +112,6 @@ OccView::OccView(QWidget* parent )
 
     // Enable the mouse tracking, by default the mouse tracking is disabled.
     setMouseTracking( true );
-
 }
 
 Handle_AIS_InteractiveContext OccView::getContext() const
@@ -171,6 +170,7 @@ void OccView::mousePressEvent( QMouseEvent* e )
     if (e->button() == Qt::LeftButton)
     {
         onLButtonDown((e->buttons() | e->modifiers()), e->pos());
+        emit MouseLeftPressed();
     }
     else if (e->button() == Qt::MidButton)
     {
@@ -224,6 +224,12 @@ void OccView::onLButtonDown( const int theFlags, const QPoint thePoint )
     mYmin = thePoint.y();
     mXmax = thePoint.x();
     mYmax = thePoint.y();
+
+    //
+    V3d_Coordinate x1, y1, z1;
+    mView->Convert(mXmin, mYmin, x1, y1, z1);
+    mLastLClickP.SetX(x1);
+    mLastLClickP.SetY(y1);
    /* if (state == 0) {
 
         mXmin = thePoint.x();
@@ -250,13 +256,13 @@ void OccView::onLButtonDown( const int theFlags, const QPoint thePoint )
     //qDebug() << mXmin << mYmin << mXmax << mYmax;
 
 }
-void OccView::drawLine()
+/*void OccView::drawLine()
 {
     TopoDS_Edge l1 = BRepBuilderAPI_MakeEdge(*mP1, *mP2);
     Handle_AIS_Shape sh = new AIS_Shape(l1);
     mContext->Display(sh);
 
-}
+}*/
 
 void OccView::onMButtonDown( const int theFlags, const QPoint thePoint )
 {
@@ -333,6 +339,7 @@ void OccView::onLButtonUp( const int theFlags, const QPoint thePoint )
         {
             inputEvent(thePoint.x(), thePoint.y());
         }
+
     }
 
 }
@@ -422,7 +429,6 @@ void OccView::inputEvent( const int x, const int y )
     UNREFERENCED_PARAMETER(y);
 
     mContext->Select();
-    qDebug() << "select";
 
     emit selectionChanged();
 }
@@ -508,16 +514,21 @@ void OccView::panByMiddleButton( const QPoint& thePoint )
      mViewer->SetRectangularGridGraphicValues(xSize, ySize, 0.0);
    //  mViewer->ActivateGrid(Aspect_GT_Rectangular, Aspect_GDM_Lines);
 
- }
+}
 
- void OccView::showGrid()
- {
-     mViewer->ActivateGrid(Aspect_GT_Rectangular, Aspect_GDM_Lines);
+void OccView::showGrid()
+{
+ mViewer->ActivateGrid(Aspect_GT_Rectangular, Aspect_GDM_Lines);
 
- }
+}
 
- void OccView::hideGrid()
- {
-     mViewer->DeactivateGrid();
+void OccView::hideGrid()
+{
+ mViewer->DeactivateGrid();
 
- }
+}
+
+gp_Pnt OccView::GetLeftClickMousePos() const
+{
+    return mLastLClickP;
+}

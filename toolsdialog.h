@@ -19,6 +19,7 @@ public:
     ~ToolsDialog();
 
     const QStringListModel *GetModelList() const;
+    const Tool *GetTool(int index) const;
 
 signals:
     void ChangeToolList(const QStringListModel *tools);

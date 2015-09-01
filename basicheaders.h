@@ -33,10 +33,17 @@
 #include <AIS_ConnectedInteractive.hxx>
 #include <gp_Trsf.hxx>
 #include <BRepOffsetAPI_MakeOffsetShape.hxx>
+#include <BRepOffsetAPI_MakeOffset.hxx>
+#include <BRepOffsetAPI_MakeThickSolid.hxx>
+#include <BRepFill_OffsetWire.hxx>
 
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Common.hxx>
+#include <BRepAdaptor_Curve2d.hxx>
+#include <BRepAdaptor_Curve.hxx>
+#include <BRepLib.hxx>
+#include <BRepCheck_Analyzer.hxx>
 
 #include <AIS_Shape.hxx>
 
@@ -51,7 +58,26 @@
 #include <gp_Circ2d.hxx>
 #include <gp_Ax2.hxx>
 #include <gp_Dir.hxx>
+#include <gp_Lin.hxx>
 #include <GC_MakeArcOfCircle.hxx>
+#include <GC_MakeSegment.hxx>
+#include <Geom_Plane.hxx>
+#include <Geom_CylindricalSurface.hxx>
+#include <Geom2d_TrimmedCurve.hxx>
+#include <Geom_TrimmedCurve.hxx>
+#include <Geom2d_Ellipse.hxx>
+#include <GCE2d_MakeSegment.hxx>
+
+#include <Handle_ShapeFix_Shape.hxx>
+#include <ShapeFix_Shape.hxx>
+#include <ShapeAnalysis_FreeBounds.hxx>
+
+#include <NCollection_Vector.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
+#include <Handle_TopTools_HSequenceOfShape.hxx>
+#define PI 3.1415926535897932385
+#define DEGTORAD(x) (((x)*PI)/180.)
+#define RADTODEG(x) (((x) * 180.) / PI)
 
 #endif // BASICHEADERS
 

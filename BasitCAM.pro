@@ -4,11 +4,11 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+QT       += core gui opengl script
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = occQt
+TARGET = BasitCAM
 TEMPLATE = app
 
 
@@ -28,7 +28,11 @@ SOURCES += main.cpp \
     gcodedialog.cpp \
     gcodewriter.cpp \
     toolsdialog.cpp \
-    tool.cpp
+    tool.cpp \
+    genericalgos.cpp \
+    tpoperation.cpp \
+    lineorarc.cpp \
+    linesorarcswithvertex.cpp
 
 HEADERS  += \
     occQt.h \
@@ -50,7 +54,11 @@ HEADERS  += \
     gcodedialog.h \
     gcodewriter.h \
     toolsdialog.h \
-    tool.h
+    tool.h \
+    genericalgos.h \
+    tpoperation.h \
+    lineorarc.h \
+    linesorarcswithvertex.h
 
 INCLUDEPATH += C:/OpenCASCADE6.9.0/opencascade-6.9.0/inc
 
@@ -73,7 +81,12 @@ win32:  LIBS += C:\OpenCASCADE6.9.0\opencascade-6.9.0\win32\vc10\lib\TKShapeSche
 #win32:  LIBS += C:\OpenCASCADE6.9.0\opencascade-6.9.0\win32\vc10\lib\TKCDF.lib
 win32:  LIBS += C:\OpenCASCADE6.9.0\opencascade-6.9.0\win32\vc10\lib\TKPShape.lib
 win32:  LIBS += C:\OpenCASCADE6.9.0\opencascade-6.9.0\win32\vc10\lib\TKG3d.lib
+win32:  LIBS += C:\OpenCASCADE6.9.0\opencascade-6.9.0\win32\vc10\lib\TKG2d.lib
 win32:  LIBS += C:\OpenCASCADE6.9.0\opencascade-6.9.0\win32\vc10\lib\PTKernel.lib
+win32:  LIBS += C:\OpenCASCADE6.9.0\opencascade-6.9.0\win32\vc10\lib\TKShHealing.lib
+
+
+
 
 DEFINES +=WNT WIN32 NO_COMMONSAMPLE_EXPORTS NO_IESAMPLE_EXPORTS
 

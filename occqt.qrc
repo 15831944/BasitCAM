@@ -22,5 +22,7 @@
         <file>Resources/grid.png</file>
         <file>Resources/gcode.png</file>
         <file>Resources/tools.png</file>
+        <file>Resources/ccw.png</file>
+        <file>Resources/cw.png</file>
     </qresource>
 </RCC>
